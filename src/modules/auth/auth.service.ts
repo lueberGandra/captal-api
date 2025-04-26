@@ -110,6 +110,7 @@ export class AuthService {
                     accessToken: cognitoResponse.AuthenticationResult.AccessToken,
                     idToken: cognitoResponse.AuthenticationResult.IdToken,
                     refreshToken: cognitoResponse.AuthenticationResult.RefreshToken,
+                    expiresIn: cognitoResponse.AuthenticationResult.ExpiresIn,
                 },
             };
         } catch (error) {

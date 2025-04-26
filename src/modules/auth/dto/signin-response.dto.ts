@@ -6,5 +6,6 @@ export class SignInResponseDto {
         accessToken: string;
         idToken: string;
         refreshToken: string;
+        expiresIn: number;
     };
 } 
