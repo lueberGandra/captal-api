@@ -1,0 +1,151 @@
+service: captal-api
+frameworkVersion: '4'
+useDotenv: true
+
+plugins:
+  - serverless-offline
+  - serverless-dotenv-plugin
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: us-east-1
+  architecture: arm64
+  memorySize: ${self:custom.stages.${opt:stage, 'development'}.memory}
+  deploymentMethod: direct
+  logRetentionInDays: ${self:custom.stages.${opt:stage}.logRetentionInDays}
+  environment:
+    PORT: 5000
+  apiGateway:
+    binaryMediaTypes:
+      - 'image/png'
+      - 'image/jpeg'
+      - 'image/heif'
+      - 'multipart/form-data'
+  logs:
+    restApi:
+      level: ERROR
+  tracing:
+    apiGateway: true
+    lambda: true  
+
+functions:
+  api:
+    handler: dist/lambda.handler
+    build: true
+    events:
+      - http:
+          method: ANY
+          path: /
+      - http:
+          method: ANY
+          path: '{proxy+}'
+
+custom:
+  dotenv:
+    path: ${self:custom.stages.${opt:stage, 'development'}.envFile}
+  serverless-offline:
+    httpPort: 5000
+    noPrependStageInUrl: true
+    noAuth: true
+    noTimeout: true
+    printOutput: true
+    useWorkerThreads: true
+    reloadHandler: true
+  esbuild:
+    bundle: true
+    minify: true
+    sourcemap: false
+    exclude:
+      - "@aws-sdk/*"
+    platform: node
+    concurrency: 10
+    external:
+      - '@nestjs/microservices'
+      - '@nestjs/microservices/microservices-module'
+      - '@nestjs/websockets/socket-module'
+  stages:
+    development:
+      memory: 512
+      logRetentionInDays: 5
+      envFile: .env.development
+    production:
+      memory: 1024
+      logRetentionInDays: 30
+      envFile: .env.production
+
+resources:
+  Resources:
+    CognitoUserPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        UserPoolName: CognitoUserPool
+        DeletionProtection: ACTIVE
+        MfaConfiguration: OFF        
+        AutoVerifiedAttributes:
+          - email
+        AdminCreateUserConfig:
+          AllowAdminCreateUserOnly: false        
+        AccountRecoverySetting:
+          RecoveryMechanisms:
+            - Name: verified_email
+              Priority: 1
+        Schema:         
+          - Name: email
+            AttributeDataType: String
+            Required: true
+            Mutable: true
+          - Name: name
+            AttributeDataType: String
+            Required: false
+            Mutable: false
+          - Name: role
+            AttributeDataType: String
+            Required: false
+            Mutable: false
+            StringAttributeConstraints:
+              MinLength: "1"
+              MaxLength: "10"
+          - Name: userId
+            AttributeDataType: String
+            Required: false
+            Mutable: false
+            StringAttributeConstraints:
+              MinLength: "1"
+              MaxLength: "36"
+        Policies:
+          PasswordPolicy:
+            MinimumLength: 8
+            RequireLowercase: true
+            RequireNumbers: true
+            RequireSymbols: true
+            RequireUppercase: true
+
+    CognitoUserPoolClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+        ClientName: ${self:service}-client
+        UserPoolId: !Ref CognitoUserPool
+        ExplicitAuthFlows:
+          - ALLOW_USER_PASSWORD_AUTH
+          - ALLOW_REFRESH_TOKEN_AUTH
+        GenerateSecret: false
+        PreventUserExistenceErrors: ENABLED
+        TokenValidityUnits:
+          AccessToken: hours
+          RefreshToken: hours
+        AccessTokenValidity: 3
+        RefreshTokenValidity: 720
+        ReadAttributes:
+          - email
+          - name
+          - custom:role
+          - custom:userId
+        WriteAttributes:
+          - email
+          - name
+          - custom:role
+          - custom:userId
+
+    
+   

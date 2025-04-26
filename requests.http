@@ -1,0 +1,47 @@
+### Sign in to get access token
+# @name signin
+POST http://localhost:5000/auth/signin
+Content-Type: application/json
+
+{
+    "email": "luebergame@hotmail.com",
+    "password": "Password123!@#"
+}
+
+### Variables
+@access_token = {{signin.response.body.data.tokens.accessToken}}
+
+### Get current user profile
+GET http://localhost:5000/users/me
+Authorization: Bearer {{access_token}}
+
+### Create a new project
+POST http://localhost:5000/projects
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{
+    "name": "Sample Project",
+    "location": "New York",
+    "landArea": 1000,
+    "estimatedCost": 500000,
+    "expectedRevenue": 750000,
+    "description": "A sample project description"
+}
+
+### Get all projects
+GET http://localhost:5000/projects
+Authorization: Bearer {{access_token}}
+
+### Get a specific project
+GET http://localhost:5000/projects/08053453-01aa-490d-ae30-63a30a57a4d1
+Authorization: Bearer {{access_token}}
+
+### Update project status
+PATCH http://localhost:5000/projects/08053453-01aa-490d-ae30-63a30a57a4d1/status
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{
+    "status": "approved"
+}
