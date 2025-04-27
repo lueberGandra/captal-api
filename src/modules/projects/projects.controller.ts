@@ -84,10 +84,6 @@ export class ProjectsController {
     description: 'Project status successfully updated',
   })
   @ApiResponse({
-    status: 403,
-    description: 'Forbidden - Only admins can update project status',
-  })
-  @ApiResponse({
     status: 404,
     description: 'Project not found',
   })
@@ -97,8 +93,7 @@ export class ProjectsController {
   ) {
     return this.projectsService.updateStatus(
       id,
-      updateProjectStatusDto,
-      UserRole.DEVELOPER,
+      updateProjectStatusDto
     );
   }
 }

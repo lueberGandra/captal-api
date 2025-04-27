@@ -82,13 +82,8 @@ export class ProjectsService {
     async updateStatus(
         id: string,
         updateProjectStatusDto: UpdateProjectStatusDto,
-        userRole: UserRole,
     ): Promise<Project> {
         this.logger.log(`Updating status for project: ${id}`);
-
-        if (userRole !== UserRole.ADMIN) {
-            throw new ForbiddenException('Only admins can update project status');
-        }
 
         const project = await this.projectsRepository.findOne({
             where: { id },
